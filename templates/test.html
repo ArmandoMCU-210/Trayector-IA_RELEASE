@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card p-4 p-md-5">
+    <div class="progress mb-4" style="height: 8px;">
+        <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+    </div>
+
+    <form id="testForm" action="{{ url_for('analizar') }}" method="POST">
+        
+        {% for q_id, datos in preguntas.items() %}
+        <div class="step" id="step-{{ loop.index }}" style="display: none;">
+            <p class="text-primary fw-bold mb-1">{{ datos.seccion }}</p>
+            <h4 class="mb-4">{{ datos.texto }}</h4>
+            
+            <div class="d-grid gap-3">
+                {% for opcion in datos.opciones %}
+                <div class="form-check p-0 m-0">
+                    <input class="form-check-input" type="radio" name="Q{{ q_id }}" id="q{{ q_id }}_{{ loop.index }}" value="{{ opcion }}" required>
+                    <label class="opcion-label" for="q{{ q_id }}_{{ loop.index }}">
+                        {{ opcion }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="d-flex justify-content-between mt-5">
+            <button type="button" class="btn btn-outline-secondary px-4" id="btnPrev" style="display: none;" onclick="cambiarPaso(-1)">⬅️ Anterior</button>
+            
+            <div class="ms-auto">
+                <button type="button" class="btn btn-primary px-4" id="btnNext" onclick="cambiarPaso(1)">Siguiente ➡️</button>
+                <button type="submit" class="btn btn-success px-4" id="btnSubmit" style="display: none;">Analizar perfil 🚀</button>
+            </div>
+        </div>
+        
+        <div id="errorMsg" class="text-danger mt-3 text-end" style="display: none; font-size: 0.9em;">
+            Por favor, selecciona una opción para continuar.
+        </div>
+    </form>
+</div>
+
+<script>
+    let pasoActual = 1;
+    const totalPasos = {{ preguntas|length }};
+    
+    // Inicializar mostrando la primera pregunta
+    mostrarPaso(pasoActual);
+
+    function mostrarPaso(n) {
+        // Ocultar todos los pasos
+        let pasos = document.getElementsByClassName("step");
+        for (let i = 0; i < pasos.length; i++) {
+            pasos[i].style.display = "none";
+        }
+        
+        // Mostrar el paso actual
+        document.getElementById("step-" + n).style.display = "block";
+        
+        // Actualizar barra de progreso
+        let porcentaje = ((n - 1) / totalPasos) * 100;
+        document.getElementById("progressBar").style.width = porcentaje + "%";
+
+        // Control de botones
+        document.getElementById("btnPrev").style.display = (n === 1) ? "none" : "inline-block";
+        
+        if (n === totalPasos) {
+            document.getElementById("btnNext").style.display = "none";
+            document.getElementById("btnSubmit").style.display = "inline-block";
+        } else {
+            document.getElementById("btnNext").style.display = "inline-block";
+            document.getElementById("btnSubmit").style.display = "none";
+        }
+        
+        // Esconder mensaje de error al cambiar de pantalla
+        document.getElementById("errorMsg").style.display = "none";
+    }
+
+    function cambiarPaso(n) {
+        // Validar si es avanzar (n = 1)
+        if (n === 1) {
+            let pasoActivo = document.getElementById("step-" + pasoActual);
+            let opciones = pasoActivo.querySelectorAll('input[type="radio"]');
+            let respondido = false;
+            
+            for (let i = 0; i < opciones.length; i++) {
+                if (opciones[i].checked) {
+                    respondido = true;
+                    break;
+                }
+            }
+            
+            if (!respondido) {
+                document.getElementById("errorMsg").style.display = "block";
+                return false; // Detener aquí si no han respondido
+            }
+        }
+        
+        // Avanzar o retroceder
+        pasoActual += n;
+        mostrarPaso(pasoActual);
+        window.scrollTo(0, 0); // Regresar arriba de la pantalla suavemente
+    }
+</script>
+{% endblock %}

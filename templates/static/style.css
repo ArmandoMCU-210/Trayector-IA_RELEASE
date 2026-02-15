@@ -1,0 +1,47 @@
+/* Fondo general más profundo */
+body {
+    background-color: #121212 !important;
+}
+
+/* Tarjetas en modo oscuro */
+.card {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 16px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+}
+
+/* Color principal (Acento) */
+.text-primary { color: #818cf8 !important; }
+.btn-primary { background-color: #6366f1; border: none; }
+.btn-primary:hover { background-color: #4f46e5; }
+.progress-bar { background-color: #6366f1; }
+
+/* Estilo para las opciones seleccionables */
+.opcion-label {
+    display: block;
+    padding: 15px 20px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #2a2a2a;
+}
+
+.opcion-label:hover {
+    border-color: #6366f1;
+    background-color: #333;
+}
+
+/* Cuando el radio button está seleccionado, cambia el estilo del label */
+.form-check-input:checked + .opcion-label {
+    border-color: #6366f1;
+    background-color: rgba(99, 102, 241, 0.1);
+    color: #818cf8;
+    font-weight: bold;
+}
+
+/* Ocultar el circulito default del radio button */
+.form-check-input {
+    display: none; 
+}
