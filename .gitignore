@@ -1,4 +1,3 @@
-tesis/
-venv/
-__pycache__/
-env/
+.env
+/env
+api/__pycache__
