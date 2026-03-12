@@ -10,7 +10,7 @@ import hashlib
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 try:
-    from llm_groq_logic import (
+    from api.llm_groq_logic import (
         obtener_saludo_inicial,
         evaluar_respuesta_usuario,
         generar_explicacion_afinidad,
@@ -18,18 +18,20 @@ try:
         BLOQUES,
     )
     LLM_AVAILABLE = True
-except Exception:
+except Exception as e:
+    print(f"[ERROR FATAL LLM] No se pudo importar: {e}")
     LLM_AVAILABLE = False
 
 try:
-    from nlp_knn_logic import (
+    from api.nlp_knn_logic import (
         entrenar_modelo_knn,
         analizar_afinidad,
         obtener_lista_carreras,
         obtener_info_carrera,
     )
     NLP_AVAILABLE = True
-except Exception:
+except Exception as e:
+    print(f"[ERROR FATAL NLP] No se pudo importar: {e}")
     NLP_AVAILABLE = False
 
 PREGUNTAS_FALLBACK = [

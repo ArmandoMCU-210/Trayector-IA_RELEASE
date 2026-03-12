@@ -6,13 +6,18 @@ LLM logic via Groq API. Compatible con Flask (sin dependencia de Streamlit).
 import os
 import json
 from groq import Groq
+from dotenv import load_dotenv, find_dotenv
 
 # ── Inicializar cliente Groq ──────────────────────────────────────────────────
-from dotenv import load_dotenv
+# find_dotenv() buscará el .env en la raíz automáticamente
+load_dotenv(find_dotenv())
 
-# ── Inicializar cliente Groq ──────────────────────────────────────────────────
-load_dotenv()
+api_key = os.environ.get("GROQ_API_KEY")
 
+# Un pequeño print de depuración para tu consola
+print("Llave de Groq detectada:", "SÍ" if api_key else "NO") 
+
+cliente_groq = Groq(api_key=api_key)
 # ── 10 Preguntas vocacionales ─────────────────────────────────────────────────
 # Bloque 1 (preguntas 1-5): orientadas al PERFIL DE INGRESO (situación actual)
 # Bloque 2 (preguntas 6-10): orientadas al PERFIL DE EGRESO (proyección futura)
@@ -70,7 +75,7 @@ def obtener_saludo_inicial() -> str:
         "Pídele que responda con detalle y honestidad, ya que la calidad del análisis "
         "depende de la profundidad de sus respuestas.\n\n"
         f"Finalmente, formula esta primera pregunta:\n\"{PREGUNTAS[0]}\"\n\n"
-        "Responde directamente sin texto adicional ni marcadores."
+            
     )
 
     resp = cliente_groq.chat.completions.create(
