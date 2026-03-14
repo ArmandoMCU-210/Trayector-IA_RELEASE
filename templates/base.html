@@ -50,13 +50,20 @@
       <a href="/sobre-nosotros">Sobre nosotros</a>
     </nav>
 
-    <div class="header-actions">
+<div class="header-actions">
       <div class="theme-toggle-wrap" title="Cambiar tema">
         <span class="theme-icon" id="icon-sun" aria-hidden="true">☀️</span>
         <button id="theme-toggle" role="switch" aria-checked="false" aria-label="Cambiar modo oscuro/claro"></button>
         <span class="theme-icon" id="icon-moon" aria-hidden="true">🌙</span>
       </div>
-      <a href="/orientador" class="btn btn-primary" style="padding:9px 18px;font-size:0.8rem;">Iniciar →</a>
+
+      {% if session.get('rol') == 'admin' %}
+        <a href="/admin" class="btn btn-ghost" style="padding:9px 15px;font-size:0.8rem;">Panel Admin</a>
+        <a href="/logout" class="btn btn-primary" style="padding:9px 15px;font-size:0.8rem; background-color: #ef4444; border: none;">Cerrar Sesión</a>
+      {% else %}
+        <a href="/login" class="btn btn-ghost" style="padding:9px 15px;font-size:0.8rem;">Acceder</a>
+        <a href="/orientador" class="btn btn-primary" style="padding:9px 18px;font-size:0.8rem;">Iniciar →</a>
+      {% endif %}
       <button class="hamburger" aria-label="Menú" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </div>

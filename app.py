@@ -1,7 +1,8 @@
 import os
 import uuid
 import json
-from flask import Flask, render_template, request, jsonify, session
+from database import db_client
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from api.orientador import OrientadorAPI
 
 app = Flask(__name__)
@@ -21,6 +22,41 @@ def get_store(sid: str) -> dict:
         _STORE[sid] = {'respuestas': [], 'resultado': None}
     return _STORE[sid]
 
+@app.route('/admin')
+def admin_dashboard():
+    # Muro de seguridad: validación estricta de sesión
+    if session.get('rol') != 'admin':
+        return redirect(url_for('index'))
+    
+    # Extraemos la información fresca de la base de datos
+    usuarios = db_client.obtener_todos_usuarios()
+    resultados = db_client.obtener_todos_resultados()
+    
+    # Renderizamos la plantilla inyectando los datos
+    return render_template('admin.html', usuarios=usuarios, resultados=resultados)
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    usuario_id = data.get('usuario_id', '').strip()
+    password = data.get('password', '').strip() # Opcional, solo para admin
+
+    if not usuario_id:
+        return jsonify({'success': False, 'error': 'ID no proporcionado.'}), 400
+
+    es_valido, mensaje, rol = db_client.verificar_acceso(usuario_id, password)
+    
+    if es_valido:
+        session['usuario_id'] = usuario_id
+        session['rol'] = rol
+        session.modified = True
+        return jsonify({
+            'success': True, 
+            'message': mensaje,
+            'rol': rol
+        })
+    else:
+        return jsonify({'success': False, 'error': mensaje}), 403
 
 # ─── PAGE ROUTES ──────────────────────────────────────────────────────────────
 
@@ -49,9 +85,20 @@ def sobre_nosotros():
 
 @app.route('/api/start', methods=['POST'])
 def api_start():
+    # 1. Rescatamos las credenciales antes del borrado
+    usuario_guardado = session.get('usuario_id')
+    rol_guardado = session.get('rol')
+
+    # 2. Hacemos la limpieza habitual
+    session.clear()
+
+    # 3. Restauramos las credenciales
+    if usuario_guardado:
+        session['usuario_id'] = usuario_guardado
+        session['rol'] = rol_guardado
+
     # Crear nueva sesión con UUID único
     sid = str(uuid.uuid4())
-    session.clear()
     session['sid'] = sid
     session['indice_pregunta'] = 0
     session['completado'] = False
@@ -145,8 +192,10 @@ def api_answer():
 @app.route('/api/result', methods=['POST'])
 def api_result():
     sid = session.get('sid')
-    if not sid:
-        return jsonify({'success': False, 'error': 'Sesión no iniciada.'}), 400
+    usuario_id = session.get('usuario_id') # Recuperamos el ID de la sesión
+
+    if not sid or not usuario_id:
+        return jsonify({'success': False, 'error': 'Sesión no iniciada o ID inválido.'}), 400
 
     store = get_store(sid)
     respuestas = store.get('respuestas', [])
@@ -158,15 +207,46 @@ def api_result():
         }), 400
 
     try:
-        resultado = orientador.obtener_resultado(respuestas)
-        # Guardar resultado en store (no en cookie)
-        store['resultado'] = resultado
-        session['completado'] = True
-        session.modified = True
-        return jsonify({'success': True, 'resultado': resultado})
+            resultado = orientador.obtener_resultado(respuestas)
+            
+            # 1. Guardar en memoria el resultado completo (para la interfaz web)
+            store['resultado'] = resultado
+            session['completado'] = True
+            session.modified = True
+
+            # 2. Filtrar lo que se va a MongoDB usando las llaves correctas de tu orientador.py
+            carrera_top = resultado.get("carrera_recomendada")
+            porcentaje_top = resultado.get("porcentaje")
+            otras_opciones = resultado.get("otras_opciones", [])
+            
+            # Armamos una estructura limpia solo con los datos duros
+            datos_para_mongo = {
+                "carrera_principal": carrera_top,
+                "similitud_principal": porcentaje_top,
+                "otras_carreras": otras_opciones
+            }
+
+            # 3. Guardar la versión ligera en MongoDB
+            db_client.guardar_resultado(usuario_id, datos_para_mongo)
+
+            return jsonify({'success': True, 'resultado': resultado})
+            
     except Exception as e:
-        app.logger.error(f'[/api/result] Error: {e}')
-        return jsonify({'success': False, 'error': str(e)}), 500
+            app.logger.error(f'[/api/result] Error: {e}')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/login')
+def login_page():
+    # Si ya es admin, lo mandamos directo a su panel
+    if session.get('rol') == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    # Destruimos todas las credenciales del servidor
+    session.clear()
+    return redirect(url_for('index'))
 
 
 @app.route('/api/reset', methods=['POST'])

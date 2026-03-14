@@ -24,11 +24,60 @@
   let isProcessing    = false;
 
   // ── Init ───────────────────────────────────────────────────────
-  async function init() {
+function init() {
     disableInput(true);
-    await startSession();
   }
 
+
+
+window.validarAcceso = async function() {
+    console.log("1. Botón presionado. Iniciando validación...");
+    
+    const inputCodigo = document.getElementById('input-codigo');
+    const inputPassword = document.getElementById('input-password');
+    
+    if (!inputCodigo || !inputPassword) {
+        console.error("ERROR FATAL: No encuentro los cuadros de texto.");
+        return;
+    }
+
+    const usuarioId = inputCodigo.value.trim();
+    const password = inputPassword.value.trim();
+
+    if (!usuarioId) {
+        alert("Por favor, ingresa tu código.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                usuario_id: usuarioId,
+                password: password 
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('modal-acceso').style.display = 'none';
+            
+            if (data.rol === 'estudiante') {
+                console.log("Acceso concedido. Iniciando sesión...");
+                await startSession(); // Aquí estaba el error del nombre
+            } else if (data.rol === 'admin') {
+                alert("Bienvenido, Administrador.");
+            }
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        console.error("Error crítico en la petición Fetch:", error);
+        alert("Ocurrió un error de red o de servidor.");
+    }
+};
   // ── API calls ──────────────────────────────────────────────────
 
   async function startSession() {

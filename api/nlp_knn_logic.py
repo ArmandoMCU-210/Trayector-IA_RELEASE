@@ -92,3 +92,21 @@ def analizar_afinidad(respuestas_alumno, vectorizador, modelo_knn, clases):
             
     # Ordenar por mayor afinidad
     return sorted(resultados, key=lambda x: x["Similitud"], reverse=True)
+
+def obtener_lista_carreras(ruta_csv):
+    """Devuelve una lista única de todas las carreras en el CSV."""
+    carreras = set()
+    with open(ruta_csv, mode='r', encoding='utf-8') as f:
+        lector = csv.DictReader(f)
+        for fila in lector:
+            carreras.add(fila['Programa educativo'])
+    return sorted(list(carreras))
+
+def obtener_info_carrera(ruta_csv, nombre_carrera):
+    """Devuelve el registro completo de una carrera específica."""
+    with open(ruta_csv, mode='r', encoding='utf-8') as f:
+        lector = csv.DictReader(f)
+        for fila in lector:
+            if fila['Programa educativo'] == nombre_carrera:
+                return fila
+    return {}

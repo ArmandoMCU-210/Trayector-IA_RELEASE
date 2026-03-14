@@ -6,9 +6,26 @@
 {% endblock %}
 
 {% block content %}
-<div class="orientador-layout">
 
-  <!-- ══ SIDEBAR ══ -->
+<div id="modal-acceso" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Bienvenido a Trayector-IA</h2>
+        <p>Ingresa tu código de acceso para comenzar.</p>
+        
+        <input type="text" id="input-codigo" placeholder="Tu código (Ej. MAT-2024)">
+        <input type="password" id="input-password" placeholder="Contraseña admin" style="display: none;">
+        
+        <button id="btn-ingresar" onclick="validarAcceso()">Ingresar</but0ton>
+        
+        <p onclick="document.getElementById('input-password').style.display='block'" 
+           style="font-size: 10px; color: transparent; cursor: default; user-select: none; margin-top: 15px;">
+           .
+        </p>
+    </div>
+</div>
+
+<div class="orientador-layout" id="interfaz-orientador">
+
   <aside class="chat-sidebar" aria-label="Panel de progreso">
     <div class="sidebar-brand">
       <div class="sidebar-brand-icon">🤖</div>
@@ -18,7 +35,6 @@
       </div>
     </div>
 
-    <!-- Progreso global -->
     <div class="progress-section">
       <h4>Progreso general</h4>
       <div class="progress-numbers">
@@ -35,7 +51,6 @@
       </div>
     </div>
 
-    <!-- Bloque 1 -->
     <div class="sidebar-block">
       <div class="block-label" id="block-label-0">📚 Bloque 1 — Perfil actual</div>
       <div class="steps-list">
@@ -55,7 +70,6 @@
       </div>
     </div>
 
-    <!-- Bloque 2 -->
     <div class="sidebar-block">
       <div class="block-label" id="block-label-5">🔭 Bloque 2 — Proyección futura</div>
       <div class="steps-list">
@@ -85,7 +99,6 @@
     </button>
   </aside>
 
-  <!-- ══ CHAT AREA ══ -->
   <div class="chat-area">
     <div class="chat-topbar">
       <div class="chat-topbar-left">
@@ -122,8 +135,7 @@
 
 {% block extra_js %}
 <script>
-  // Exponer total de preguntas al script de chat
   window.TOTAL_PREGUNTAS = 10;
 </script>
-<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}?v=1.1"></script>
 {% endblock %}
