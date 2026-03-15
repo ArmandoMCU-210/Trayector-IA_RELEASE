@@ -26,6 +26,11 @@
   // ── Init ───────────────────────────────────────────────────────
 function init() {
     disableInput(true);
+    
+    // Si el modal no existe (porque ya inició sesión), arrancamos el test
+    if (!document.getElementById('modal-acceso')) {
+        startSession();
+    }
   }
 
 
@@ -80,9 +85,15 @@ window.validarAcceso = async function() {
 };
   // ── API calls ──────────────────────────────────────────────────
 
-  async function startSession() {
+async function startSession() {
     try {
-      const res  = await fetch('/api/start', { method: 'POST', headers: jsonHeaders() });
+      // El cuerpo vacío {} evita que Flask lance el Error 400
+      const res  = await fetch('/api/start', { 
+          method: 'POST', 
+          headers: jsonHeaders(),
+          body: JSON.stringify({}) 
+      });
+      
       const data = await res.json();
 
       if (data.success) {
@@ -93,11 +104,13 @@ window.validarAcceso = async function() {
         chatActive = true;
         disableInput(false);
       } else {
-        addError('No se pudo iniciar la sesión. ' + (data.error || ''));
+        // Si el backend lo rechaza (ej. "Este usuario ya completó la prueba")
+        alert(data.error);
+        window.location.href = '/'; // Lo regresamos a la página principal
       }
     } catch (err) {
       addError('Error de conexión. Verifica que el servidor esté activo.');
-      console.error(err);
+      console.error("Detalle del error:", err);
     }
   }
 

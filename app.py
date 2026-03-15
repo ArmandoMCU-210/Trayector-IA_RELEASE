@@ -85,26 +85,39 @@ def sobre_nosotros():
 
 @app.route('/api/start', methods=['POST'])
 def api_start():
-    # 1. Rescatamos las credenciales antes del borrado
+    # El salvavidas: silent=True evita que Flask colapse si JS manda una petición vacía
+    data = request.get_json(silent=True) or {}
+    usuario_modal = data.get('usuario_id', '').strip()
+
     usuario_guardado = session.get('usuario_id')
     rol_guardado = session.get('rol')
 
-    # 2. Hacemos la limpieza habitual
-    session.clear()
+    if not usuario_guardado:
+        if not usuario_modal:
+            return jsonify({'success': False, 'error': 'El ID es obligatorio.'})
+        
+        acceso_permitido, mensaje, rol = db_client.verificar_acceso(usuario_modal)
+        if not acceso_permitido:
+            return jsonify({'success': False, 'error': mensaje})
+        
+        usuario_guardado = usuario_modal
+        rol_guardado = rol
 
-    # 3. Restauramos las credenciales
-    if usuario_guardado:
-        session['usuario_id'] = usuario_guardado
-        session['rol'] = rol_guardado
+    # --- BARRERA DE ESTADO ---
+    if rol_guardado != 'admin' and db_client.ya_realizo_prueba(usuario_guardado):
+        session.clear()
+        return jsonify({'success': False, 'error': 'Este usuario ya completó la prueba.'})
+    # -------------------------
 
-    # Crear nueva sesión con UUID único
+    session['usuario_id'] = usuario_guardado
+    session['rol'] = rol_guardado
+
     sid = str(uuid.uuid4())
     session['sid'] = sid
     session['indice_pregunta'] = 0
     session['completado'] = False
     session.modified = True
 
-    # Inicializar store en memoria
     _STORE[sid] = {'respuestas': [], 'resultado': None}
 
     try:
@@ -116,7 +129,8 @@ def api_start():
             'pregunta_actual': 0
         })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        app.logger.error(f'Error en api_start: {e}')
+        return jsonify({'success': False, 'error': 'Error interno del servidor'})
 
 
 @app.route('/api/question', methods=['GET'])

@@ -24,7 +24,6 @@ class Database:
 
     def verificar_acceso(self, usuario_id, password_plano=""):
         try:
-            # Usamos self.usuarios que definiste limpiamente en el __init__
             usuario = self.usuarios.find_one({"usuario_id": usuario_id})
             
             if not usuario:
@@ -41,29 +40,35 @@ class Database:
                 if not hash_guardado:
                     return False, "Error de credenciales en el servidor.", None
                 
-                # --- EL SALVAVIDAS DE BYTES ---
                 try:
                     pwd_bytes = password_plano.encode('utf-8')
-                    
-                    # Validamos si Mongo nos entregó bytes o texto
                     if isinstance(hash_guardado, bytes):
                         hash_bytes = hash_guardado
                     else:
                         hash_bytes = hash_guardado.strip().encode('utf-8')
                     
-                    # Comparamos matemáticamente
                     if bcrypt.checkpw(pwd_bytes, hash_bytes):
                         return True, "Acceso concedido.", rol
                     else:
                         return False, "Contraseña incorrecta.", None
                 except ValueError:
-                    return False, "Error crítico: El hash en MongoDB es inválido o está corrupto.", None
+                    return False, "Error crítico: El hash en MongoDB es inválido.", None
             
             return True, "Acceso concedido.", rol
 
         except Exception as e:
             print(f"[DEBUG] Error real en verificar_acceso: {e}")
             return False, "Error interno del servidor.", None
+
+    # --- FUNCIÓN NUEVA AGREGADA AQUÍ ---
+    def ya_realizo_prueba(self, usuario_id):
+        try:
+            resultado = self.resultados.find_one({"usuario_id": usuario_id})
+            return resultado is not None
+        except Exception as e:
+            print(f"[DEBUG] Error al buscar resultado previo: {e}")
+            return False
+    # -----------------------------------
 
     def guardar_resultado(self, usuario_id, resultado_dict):
         if not self.client: 
